@@ -1,4 +1,3 @@
-
 import { Injectable } from '@angular/core';
 import { InitService } from '@exlibris/exl-cloudapp-angular-lib';
 import { BehaviorSubject, Observable } from 'rxjs';

@@ -146,6 +146,7 @@ export class SettingsComponent implements OnInit, OnDestroy {
     this.translate.instant('Fields.Vendor');
     this.translate.instant('Fields.Price');
     this.translate.instant('Fields.Fund');
+    this.translate.instant('Fields.CreatedDate');
   }
 
 }
