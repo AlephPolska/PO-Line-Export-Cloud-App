@@ -16,7 +16,7 @@ The app will display a list of the PO Lines visible on the Alma page.
 
 Select the lines you wish to export. You can use the "Select All" checkbox or check individual lines.
 
-![Main Menu](./assets/main_eng.png)
+![Main Menu](cloudapp/assets/main_eng.png)
 
 Choose your desired action:
 
@@ -26,7 +26,7 @@ Choose your desired action:
   
   - Download: Downloads the data as a .txt file.
 
-![Preview](./assets/preview_eng.png)
+![Preview](cloudapp/assets/preview_eng.png)
 <br>
 </br>
 
@@ -49,7 +49,7 @@ You can configure the following:
   - Reorder Columns: Drag and drop the columns to change the order they appear in the export.
 
 
-![Settings Menu](./assets/settings_eng.png)
+![Settings Menu](cloudapp/assets/settings_eng.png)
 
 Note: Your settings are persistent. They will be saved even after you log out of Alma or change the interface language.
 
@@ -88,7 +88,7 @@ Aplikacja wyświetli listę linii zamówienia widocznych na stronie Almy.
 
 Zaznacz linie, które chcesz wyeksportować. Możesz użyć opcji "Zaznacz wszystko" lub zaznaczyć poszczególne linie ręcznie.
 
-![Strona główna](./assets/main_pol.png)
+![Strona główna](cloudapp/assets/main_pol.png)
 
 Wybierz pożądaną akcję:
 
@@ -98,7 +98,7 @@ Wybierz pożądaną akcję:
   
   - Pobierz: Pobiera dane w postaci pliku .txt.
 
-![Podgląd](./assets/preview_pol.png)
+![Podgląd](cloudapp/assets/preview_pol.png)
 <br>
 </br>
 
@@ -120,7 +120,7 @@ Możesz skonfigurować następujące elementy:
   
   - Zmień kolejność kolumn: Przeciągnij i upuść kolumny, aby zmienić kolejność ich pojawiania się w eksporcie.
 
-![Ustawienia](./assets/settings_pol.png)
+![Ustawienia](cloudapp/assets/settings_pol.png)
 
 Uwaga: Twoje ustawienia zostaną zapisane nawet po wylogowaniu się z Almy lub zmianie języka interfejsu.
 
