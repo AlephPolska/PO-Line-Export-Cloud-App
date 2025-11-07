@@ -53,54 +53,43 @@ export class ExportService {
     }
     
     
-    async copyContent(content: string): Promise<void> {
+    copyContent(content: string): Promise<void> {
         if (!content) {
             this.alert.warn(this.translate.instant('Main.Alerts.NoPreviewContent'));
             return Promise.reject(new Error('No content to copy.'));
         }
 
-        if (!navigator.clipboard || !navigator.clipboard.writeText) {
-            console.error('Clipboard API not available. Falling back to execCommand.');
-            return this.copyContentLegacy(content);
-        }
-
-        try {
-            await navigator.clipboard.writeText(content);
-            this.alert.success(this.translate.instant('Main.Alerts.CopySuccess'));
-
-        } catch (err) {
-            console.error('Async copy failed: ', err);
-            this.alert.error(this.translate.instant('Main.Alerts.CopyError'));
-            throw err; 
-        }
+        console.log('Using legacy copy method (execCommand) for Alma compatibility.');
+        
+        return this.copyContentLegacy(content);
     }
 
-    private copyContentLegacy(content: string): Promise<void> {
-      return new Promise((resolve, reject) => {
-        const textArea = document.createElement("textarea");
-        textArea.value = content;
-        textArea.style.position = 'fixed'; 
-        textArea.style.opacity = '0';
-        document.body.appendChild(textArea);
-        textArea.focus();
-        textArea.select();
-        try {
-            const successful = document.execCommand('copy');
-            if(successful) {
-                this.alert.success(this.translate.instant('Main.Alerts.CopySuccess'));
-                resolve();
-            } else {
-                this.alert.error(this.translate.instant('Main.Alerts.CopyError'));
-                reject(new Error('execCommand failed.'));
-            }
-        } catch (err) {
-            console.error('Fallback: Oops, unable to copy', err);
-            this.alert.error(this.translate.instant('Main.Alerts.CopyError'));
-            reject(err);
-        }
-        document.body.removeChild(textArea);
-      });
-    }
+    private copyContentLegacy(content: string): Promise<void> {
+      return new Promise((resolve, reject) => {
+        const textArea = document.createElement("textarea");
+        textArea.value = content;
+        textArea.style.position = 'fixed'; 
+        textArea.style.opacity = '0';
+        document.body.appendChild(textArea);
+        textArea.focus();
+        textArea.select();
+        try {
+            const successful = document.execCommand('copy');
+            if(successful) {
+                this.alert.success(this.translate.instant('Main.Alerts.CopySuccess'));
+                resolve();
+            } else {
+                this.alert.error(this.translate.instant('Main.Alerts.CopyError'));
+                reject(new Error('execCommand failed.'));
+            }
+        } catch (err) {
+            console.error('Fallback: Oops, unable to copy', err);
+            this.alert.error(this.translate.instant('Main.Alerts.CopyError'));
+            reject(err);
+        }
+        document.body.removeChild(textArea);
+      });
+    }
 
     downloadContent(content: string) {
         if (!content) {
@@ -131,7 +120,7 @@ export class ExportService {
                 }
             }
             return field.customLabel || ''; 
-       }).join('\t');
+       }).join('\t');
 
         const headerLine = customHeader ? `${customHeader}\n` : ''; 
         let fileContent = `${headerLine}${headers}\n`; 
@@ -144,7 +133,7 @@ export class ExportService {
                     case 'author': return poLine.resource_metadata?.author || '';
                     case 'poNumber': return poLine.po_number || '';
                     case 'line_number': return poLine.number || '';
-                    case 'owner': return poLine.owner?.desc || '';
+                    case 'owner': return poLine.owner?.desc || '';
                     case 'vendor': return poLine.vendor?.desc || '';
                     case 'price': return (poLine.price?.sum || poLine.price?.amount || '0').toString();
                     case 'fund': {
@@ -157,7 +146,7 @@ export class ExportService {
                     }
                     case 'quantity': return (poLine.location || []).reduce((sum: number, loc: any) => sum + (loc.quantity || 0), 0);
                     case 'created_date': return poLine.created_date || '';
-                    default: return '';
+                    default: return '';
                 }
             }).join('\t');
             fileContent += `${row}\n`;
@@ -165,4 +154,3 @@ export class ExportService {
         return fileContent;
     }
 }
-

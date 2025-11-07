@@ -23,7 +23,7 @@ const MOCK_FIELDS: FieldConfig[] = [
   { name: 'title', label: 'Tytuł', selected: true, customLabel: 'Tytuł' },
   { name: 'quantity', label: 'Ilość', selected: true, customLabel: 'Ilość' },
   { name: 'fund', label: 'Fundusz', selected: true, customLabel: 'Fundusz' },
-  { name: 'created_date', label: 'Data Utw.', selected: true, customLabel: 'Fields.CreatedDate' }
+  { name: 'created_date', label: 'Data Utw.', selected: true, customLabel: 'Fields.CreatedDate' }
 ];
 
 const MOCK_POLINE_RESPONSE_1 = {
@@ -34,14 +34,14 @@ const MOCK_POLINE_RESPONSE_1 = {
     { fund_code: { value: 'FUND_A' } },
     { fund_code: { value: 'FUND_B' } }
   ],
-  created_date: '2020-01-15Z'
+  created_date: '2020-01-15Z'
 };
 const MOCK_POLINE_RESPONSE_2 = {
   po_number: 'PO-456',
   resource_metadata: { title: 'Książka 2' },
   location: [ { quantity: 1 } ],
   fund_distribution: [ { fund_code: { value: 'FUND_C' } } ],
-  created_date: '2021-03-20Z'
+  created_date: '2021-03-20Z'
 };
 
 const MOCK_CUSTOM_HEADER = '# Mój Nagłówek';
@@ -52,12 +52,10 @@ describe('ExportService', () => {
   let mockRestService: jasmine.SpyObj<CloudAppRestService>;
   let mockAlertService: jasmine.SpyObj<AlertService>;
   let mockTranslateService: jasmine.SpyObj<TranslateService>;
-
-  let mockClipboard: { writeText: jasmine.Spy };
-  let originalClipboard: any; 
   
   let mockAnchor: any; 
   let mockTextArea: any; 
+  let execCommandSpy: jasmine.Spy;
 
   let appendChildSpy: jasmine.Spy;
   let removeChildSpy: jasmine.Spy;
@@ -68,15 +66,6 @@ describe('ExportService', () => {
     mockAlertService = jasmine.createSpyObj('AlertService', ['success', 'warn', 'error']);
     mockTranslateService = jasmine.createSpyObj('TranslateService', ['instant']);
 
-    mockClipboard = { writeText: jasmine.createSpy('writeText').and.resolveTo(undefined) };
-    originalClipboard = (navigator as any).clipboard;
-    Object.defineProperty(navigator, 'clipboard', {
-      value: mockClipboard,
-      writable: true,
-      configurable: true
-    });
-
-    
     mockAnchor = {
       href: '',
       download: '',
@@ -103,6 +92,8 @@ describe('ExportService', () => {
     appendChildSpy = spyOn(document.body, 'appendChild').and.callFake((node) => node);
     removeChildSpy = spyOn(document.body, 'removeChild').and.callFake((node) => node);
 
+    execCommandSpy = spyOn(document, 'execCommand');
+
     spyOn(URL, 'createObjectURL').and.returnValue('blob:http://fake-url');
     spyOn(URL, 'revokeObjectURL');
 
@@ -122,13 +113,8 @@ describe('ExportService', () => {
   });
 
   afterEach(() => {
-    Object.defineProperty(navigator, 'clipboard', {
-      value: originalClipboard,
-      writable: true,
-      configurable: true
-    });
     appendChildSpy.and.callThrough();
-    removeChildSpy.and.callThrough();
+    removeChildSpy.and.callThrough();
     createElementSpy.and.callThrough();
 
     mockRestService.call.calls.reset();
@@ -151,7 +137,7 @@ describe('ExportService', () => {
       
       mockTranslateService.instant
         .withArgs('Fields.PONumber').and.returnValue('Nr Zlecenia')
-        .withArgs('Fields.CreatedDate').and.returnValue('Data Utworzenia')
+        .withArgs('Fields.CreatedDate').and.returnValue('Data Utworzenia')
         .withArgs('Main.ExportFilename').and.returnValue('export.txt');
     });
 
@@ -176,54 +162,57 @@ describe('ExportService', () => {
 
   });
 
-  describe('copyContent (async)', () => {
-
-    it('should call navigator.clipboard.writeText and alert.success when content is provided', async () => {
-      const content = 'Test content';
-      await service.copyContent(content);
-
-      expect(mockClipboard.writeText).toHaveBeenCalledWith(content);
-      expect(mockAlertService.success).toHaveBeenCalledWith('T:Main.Alerts.CopySuccess');
-      expect(mockAlertService.error).not.toHaveBeenCalled();
-    });
+  describe('copyContent', () => {
 
     it('should call alert.warn and reject promise when content is empty', async () => {
       await expectAsync(service.copyContent('')).toBeRejectedWithError('No content to copy.');
       
       expect(mockAlertService.warn).toHaveBeenCalledWith('T:Main.Alerts.NoPreviewContent');
-      expect(mockClipboard.writeText).not.toHaveBeenCalled();
+      expect(execCommandSpy).not.toHaveBeenCalled();
       expect(mockAlertService.success).not.toHaveBeenCalled();
     });
 
-    it('should call alert.error and throw when clipboard.writeText fails', async () => {
-      const error = new Error('Clipboard failed');
-      mockClipboard.writeText.and.rejectWith(error); 
+    it('should use legacy execCommand logic to copy content successfully', async () => {
+      const content = 'Test content';
+      execCommandSpy.and.returnValue(true);
 
-      await expectAsync(service.copyContent('Test content')).toBeRejectedWith(error);
-      
-      expect(mockClipboard.writeText).toHaveBeenCalledWith('Test content');
-      expect(mockAlertService.error).toHaveBeenCalledWith('T:Main.Alerts.CopyError');
-      expect(mockAlertService.success).not.toHaveBeenCalled();
-    });
-
-    it('should use legacyCopy if clipboard API is not available', async () => {
-      Object.defineProperty(navigator, 'clipboard', { value: undefined, configurable: true });
-      
-      const execCommandSpy = spyOn(document, 'execCommand').and.returnValue(true);
-
-      await service.copyContent('Legacy Test');
+      await expectAsync(service.copyContent(content)).toBeResolved();
 
       expect(createElementSpy).toHaveBeenCalledWith('textarea');
       expect(appendChildSpy).toHaveBeenCalledWith(mockTextArea);
-      
-      expect(mockTextArea.value).toBe('Legacy Test'); 
-
+      expect(mockTextArea.value).toBe(content);
       expect(mockTextArea.focus).toHaveBeenCalled();
       expect(mockTextArea.select).toHaveBeenCalled();
       expect(execCommandSpy).toHaveBeenCalledWith('copy');
       expect(removeChildSpy).toHaveBeenCalledWith(mockTextArea);
-
+      
       expect(mockAlertService.success).toHaveBeenCalledWith('T:Main.Alerts.CopySuccess');
+      expect(mockAlertService.error).not.toHaveBeenCalled();
+    });
+
+    it('should call alert.error when legacy execCommand returns false', async () => {
+      const content = 'Test content';
+      execCommandSpy.and.returnValue(false);
+
+      await expectAsync(service.copyContent(content)).toBeRejectedWithError('execCommand failed.');
+      
+      expect(execCommandSpy).toHaveBeenCalledWith('copy');
+      expect(mockAlertService.error).toHaveBeenCalledWith('T:Main.Alerts.CopyError');
+      expect(mockAlertService.success).not.toHaveBeenCalled();
+      expect(removeChildSpy).toHaveBeenCalledWith(mockTextArea);
+    });
+
+    it('should call alert.error when legacy execCommand throws an error', async () => {
+      const content = 'Test content';
+      const error = new Error('Legacy copy failed');
+      execCommandSpy.and.throwError(error);
+
+      await expectAsync(service.copyContent(content)).toBeRejectedWith(error);
+      
+      expect(execCommandSpy).toHaveBeenCalledWith('copy');
+      expect(mockAlertService.error).toHaveBeenCalledWith('T:Main.Alerts.CopyError');
+      expect(mockAlertService.success).not.toHaveBeenCalled();
+      expect(removeChildSpy).toHaveBeenCalledWith(mockTextArea);
     });
   });
 
